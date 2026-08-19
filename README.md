@@ -41,6 +41,15 @@ docker compose -f deploy\compose.yaml --env-file deploy\.env up --build
 
 Portal: http://localhost:8111
 
+Overlay B（Docker Desktop Kubernetes。他 overlay と同時に載せない）:
+
+```powershell
+cd ..\pf-cloud-k8s
+.\scripts\cluster-smoke-b-collab.ps1
+```
+
+http://portal.localhost
+
 ## HTTP
 
 | Method | Path | Role |
