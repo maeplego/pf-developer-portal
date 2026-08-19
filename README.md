@@ -2,7 +2,7 @@
 
 P11 OpenAPI developer portal (idea 29). **Hand-placed YAML** is rendered as a catalog + reference, and a **mock** answers from examples. No GitHub clone, no exploit/PoC, no live proxy to other products.
 
-Learning / portfolio sample. Formal docs: `project/portfolio-plan/developer-platform/docs/`. CI dashboard and code review live in other P11 repos and are not this slice.
+Learning / portfolio sample. Formal docs: `project/portfolio-plan/developer-platform/docs/`. CI dashboard: sibling `pf-developer-ci-dash`. Review UI: sibling `pf-developer-review`.
 
 ## Demo
 
@@ -50,6 +50,19 @@ cd ..\pf-cloud-k8s
 
 http://portal.localhost
 
+## oasdiff gate
+
+```powershell
+go test ./internal/specbreak ./cmd/oasdiff-gate
+go run ./cmd/oasdiff-gate testdata\openapi\base.yaml testdata\openapi\compatible.yaml
+# breaking fixture exits 1:
+go run ./cmd/oasdiff-gate testdata\openapi\base.yaml testdata\openapi\breaking.yaml
+```
+
+CI: `.github/workflows/openapi-breaking.yml` runs `oasdiff/oasdiff-action@v0.1.13` on the same fixtures (compatible green, breaking must fail). Copy `examples/oasdiff-action.yml` into other service repos. Generated `go-api` / `go-next` templates already include that workflow.
+
+`POST /api/diff` compares two YAML bodies (no URL fetch).
+
 ## HTTP
 
 | Method | Path | Role |
@@ -59,8 +72,10 @@ http://portal.localhost
 | GET | `/docs/{slug}` | reference + Try it out |
 | GET | `/api/catalog` | JSON list |
 | GET | `/api/specs/{slug}` | raw YAML |
+| POST | `/api/diff` | JSON `{base, revision}` YAML; 409 on ERR |
 | * | `/mock/{slug}/...` | example mock |
 
 ## Not in this slice
 
-oasdiff Action, CI pipeline dashboard, PR review UI, spec upload admin, Git sync, API keys.
+Spec upload admin, Git sync, API keys, portal web shell that embeds CI/review.
+

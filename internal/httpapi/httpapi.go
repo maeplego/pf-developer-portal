@@ -9,6 +9,7 @@ import (
 
 	"github.com/portfolio/pf-developer-portal/internal/catalog"
 	"github.com/portfolio/pf-developer-portal/internal/mock"
+	"github.com/portfolio/pf-developer-portal/internal/specbreak"
 )
 
 type Server struct {
@@ -22,6 +23,7 @@ func New(cat *catalog.Catalog) http.Handler {
 	mux.HandleFunc("GET /health", s.health)
 	mux.HandleFunc("GET /ready", s.health)
 	mux.HandleFunc("GET /api/catalog", s.apiCatalog)
+	mux.HandleFunc("POST /api/diff", s.apiDiff)
 	mux.HandleFunc("GET /api/specs/{slug}", s.apiSpec)
 	mux.HandleFunc("GET /docs/{slug}", s.docs)
 	mux.HandleFunc("GET /{$}", s.home)
@@ -50,6 +52,33 @@ func (s *Server) apiCatalog(w http.ResponseWriter, _ *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{"apis": out})
+}
+
+func (s *Server) apiDiff(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Base     string `json:"base"`
+		Revision string `json:"revision"`
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 512*1024)
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":{"code":"invalid_request","message":"json body with base and revision yaml"}}`))
+		return
+	}
+	rep, err := specbreak.CompareYAML([]byte(body.Base), []byte(body.Revision))
+	w.Header().Set("Content-Type", "application/json")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]any{"error": map[string]string{"code": "invalid_request", "message": err.Error()}})
+		return
+	}
+	status := http.StatusOK
+	if rep.HasERR() {
+		status = http.StatusConflict
+	}
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]any{"ok": !rep.HasERR(), "errors": rep.Errors})
 }
 
 func (s *Server) apiSpec(w http.ResponseWriter, r *http.Request) {

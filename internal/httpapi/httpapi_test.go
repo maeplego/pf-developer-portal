@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -68,6 +69,29 @@ func TestDocsRender(t *testing.T) {
 		if !strings.Contains(html, want) {
 			t.Fatalf("missing %q", want)
 		}
+	}
+}
+
+func TestAPIDiffBreaking(t *testing.T) {
+	h := testServer(t)
+	base, err := os.ReadFile(filepath.Join("..", "..", "testdata", "openapi", "base.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	brk, err := os.ReadFile(filepath.Join("..", "..", "testdata", "openapi", "breaking.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload, _ := json.Marshal(map[string]string{"base": string(base), "revision": string(brk)})
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/api/diff", strings.NewReader(string(payload)))
+	req.Header.Set("Content-Type", "application/json")
+	h.ServeHTTP(rr, req)
+	if rr.Code != 409 {
+		t.Fatalf("want 409 got %d %s", rr.Code, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), "response-property-removed") {
+		t.Fatalf("%s", rr.Body.String())
 	}
 }
 

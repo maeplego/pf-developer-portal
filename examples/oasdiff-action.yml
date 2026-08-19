@@ -1,0 +1,25 @@
+# Example: fail a PR when OpenAPI has ERR-level breaking changes.
+# Copy into a service repo that keeps openapi.yaml at the root.
+# Pin oasdiff-action; do not commit PATs.
+
+name: oasdiff-breaking
+
+on:
+  pull_request:
+
+jobs:
+  breaking:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: base spec from target branch
+        run: |
+          mkdir -p /tmp/oasdiff
+          git show "origin/${{ github.base_ref }}:openapi.yaml" > /tmp/oasdiff/openapi.yaml
+      - uses: oasdiff/oasdiff-action/breaking@v0.1.13
+        with:
+          base: /tmp/oasdiff/openapi.yaml
+          revision: openapi.yaml
+          fail-on: ERR

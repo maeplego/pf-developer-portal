@@ -1,0 +1,52 @@
+name: oasdiff-breaking
+
+# Fails the job when OpenAPI ERR-level breaking changes appear.
+# Compatible fixture pair must stay green. Breaking fixture is asserted
+# by go test (exit 1), not by this Action job (that would keep main red).
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  oasdiff-action:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: oasdiff on compatible fixtures (must be green)
+        uses: oasdiff/oasdiff-action/breaking@v0.1.13
+        with:
+          base: testdata/openapi/base.yaml
+          revision: testdata/openapi/compatible.yaml
+          fail-on: ERR
+      - name: oasdiff on breaking fixture (must fail)
+        id: breaking
+        continue-on-error: true
+        uses: oasdiff/oasdiff-action/breaking@v0.1.13
+        with:
+          base: testdata/openapi/base.yaml
+          revision: testdata/openapi/breaking.yaml
+          fail-on: ERR
+      - name: require breaking fixture to fail
+        run: |
+          if [ "${{ steps.breaking.outcome }}" != "failure" ]; then
+            echo "expected oasdiff to fail on testdata/openapi/breaking.yaml"
+            exit 1
+          fi
+
+  pr-live-spec:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: extract base-branch payments spec
+        run: |
+          mkdir -p /tmp/base-specs
+          git show "${{ github.event.pull_request.base.sha }}:specs/payments-v1.yaml" > /tmp/base-specs/payments-v1.yaml
+      - uses: oasdiff/oasdiff-action/breaking@v0.1.13
+        with:
+          base: /tmp/base-specs/payments-v1.yaml
+          revision: specs/payments-v1.yaml
+          fail-on: ERR
