@@ -1,81 +1,36 @@
 # pf-developer-portal
 
-P11 OpenAPI developer portal (idea 29). **Hand-placed YAML** is rendered as a catalog + reference, and a **mock** answers from examples. No GitHub clone, no exploit/PoC, no live proxy to other products.
-
-Learning / portfolio sample. Formal docs: `project/portfolio-plan/developer-platform/docs/`. CI dashboard: sibling `pf-developer-ci-dash`. Review UI: sibling `pf-developer-review`.
-
-## Demo
+学習用の OpenAPI ポータルです。手置きの YAML をカタログとリファレンスに描き、example からモック応答します。他プロダクトへのライブプロキシや Git clone はありません。**本番 API ポータルの置き換えではありません。**
 
 ```powershell
 go test ./...
 go run ./cmd/portal
-# http://localhost:8111
-# http://localhost:8111/docs/payments
-# curl.exe -s http://localhost:8111/health
 ```
 
-Mock (example-first, request schema validated, no persistence):
+- カタログ: http://localhost:8111
+- 例: http://localhost:8111/docs/payments
+
+モックはスキーマ検証あり、永続化なしです。必須フィールドや `Idempotency-Key` が無いと 400、未知パスは 404 です。
+
+YAML に載っている仕様:
+
+| slug | 内容 |
+| --- | --- |
+| `payments` | 架空のチャージ API |
+| `commerce-catalog` | コマース商品のサブセット |
+| `content-blog` | ブログ公開記事のサブセット |
+
+テストで AWS キー風などの文字列が YAML に混ざらないようにしています。
+
+Compose は `deploy/` です。ポータルは http://localhost:8111 です。
+
+## OpenAPI の破壊的変更
 
 ```powershell
-curl.exe -s -D - -X POST http://localhost:8111/mock/payments/v1/charges -H "Content-Type: application/json" -H "Idempotency-Key: demo-charge-001" -d "{\"amountMinor\":1299,\"currency\":\"JPY\",\"source\":\"tok_demo_visa\"}"
-```
-
-Missing `amountMinor` or `Idempotency-Key` returns **400**. Unknown paths return **404**.
-
-## Specs in this repo
-
-| slug | file | why |
-| --- | --- | --- |
-| `payments` | `specs/payments-v1.yaml` | idea 29 fictional charges API |
-| `commerce-catalog` | `specs/commerce-catalog-v1.yaml` | P06 catalog subset, hand-placed |
-| `content-blog` | `specs/content-blog-v1.yaml` | P08 public posts subset, hand-placed |
-
-Examples are linted in tests so AWS-key / GitHub PAT / PEM shapes cannot ship in YAML.
-
-## Compose
-
-```powershell
-copy deploy\.env.example deploy\.env
-docker compose -f deploy\compose.yaml --env-file deploy\.env up --build
-```
-
-Portal: http://localhost:8111
-
-Overlay B（Docker Desktop Kubernetes。他 overlay と同時に載せない）:
-
-```powershell
-cd ..\pf-cloud-k8s
-.\scripts\cluster-smoke-b-collab.ps1
-```
-
-http://portal.localhost
-
-## oasdiff gate
-
-```powershell
-go test ./internal/specbreak ./cmd/oasdiff-gate
 go run ./cmd/oasdiff-gate testdata\openapi\base.yaml testdata\openapi\compatible.yaml
-# breaking fixture exits 1:
 go run ./cmd/oasdiff-gate testdata\openapi\base.yaml testdata\openapi\breaking.yaml
 ```
 
-CI: `.github/workflows/openapi-breaking.yml` runs `oasdiff/oasdiff-action@v0.1.13` on the same fixtures (compatible green, breaking must fail). Copy `examples/oasdiff-action.yml` into other service repos. Generated `go-api` / `go-next` templates already include that workflow.
+後者は終了コード 1 です。`.github/workflows/openapi-breaking.yml` が同じフィクスチャを CI で回します。他リポジトリへは `examples/oasdiff-action.yml` をコピーできます。
 
-`POST /api/diff` compares two YAML bodies (no URL fetch).
-
-## HTTP
-
-| Method | Path | Role |
-| --- | --- | --- |
-| GET | `/health` `/ready` | liveness / ready |
-| GET | `/` | catalog HTML |
-| GET | `/docs/{slug}` | reference + Try it out |
-| GET | `/api/catalog` | JSON list |
-| GET | `/api/specs/{slug}` | raw YAML |
-| POST | `/api/diff` | JSON `{base, revision}` YAML; 409 on ERR |
-| * | `/mock/{slug}/...` | example mock |
-
-## Not in this slice
-
-Spec upload admin, Git sync, API keys, portal web shell that embeds CI/review.
-
+設計の詳細は [portfolio-plan](https://github.com/maeplego/portfolio-plan) の `portfolio-plan/developer-platform/docs/` です。
