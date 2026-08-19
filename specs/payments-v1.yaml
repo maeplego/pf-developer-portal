@@ -1,0 +1,152 @@
+openapi: 3.0.3
+info:
+  title: Payments API
+  version: "1.0.0"
+  description: |
+    Fictional charge API for the P11 portal demo (idea 29).
+    Money is integer minor units. Idempotency-Key is required on create.
+    This is not a real processor; the mock has no side effects.
+  x-portal:
+    slug: payments
+    summary: Create and fetch demo charges
+    source: hand-placed
+servers:
+  - url: http://localhost:8111/mock/payments
+    description: Local mock
+tags:
+  - name: Charges
+    description: One-shot card charges (demo)
+paths:
+  /v1/charges:
+    post:
+      tags: [Charges]
+      operationId: createCharge
+      summary: Create a charge
+      description: Captures a demo payment. Repeat the same Idempotency-Key to get the same charge id.
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 8
+          example: demo-charge-001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCharge"
+            example:
+              amountMinor: 1299
+              currency: JPY
+              source: tok_demo_visa
+              statement: PORTFOLIO*COFFEE
+      responses:
+        "201":
+          description: Charge created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Charge"
+              example:
+                id: ch_demo_1
+                amountMinor: 1299
+                currency: JPY
+                status: succeeded
+                source: tok_demo_visa
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+  /v1/charges/{chargeId}:
+    get:
+      tags: [Charges]
+      operationId: getCharge
+      summary: Get a charge
+      parameters:
+        - in: path
+          name: chargeId
+          required: true
+          schema:
+            type: string
+          example: ch_demo_1
+      responses:
+        "200":
+          description: Charge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Charge"
+              example:
+                id: ch_demo_1
+                amountMinor: 1299
+                currency: JPY
+                status: succeeded
+                source: tok_demo_visa
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  schemas:
+    CreateCharge:
+      type: object
+      required: [amountMinor, currency, source]
+      properties:
+        amountMinor:
+          type: integer
+          minimum: 1
+          description: Amount in minor units (yen for JPY).
+        currency:
+          type: string
+          enum: [JPY, USD]
+        source:
+          type: string
+          description: Tokenized payment source. Demo values only.
+        statement:
+          type: string
+    Charge:
+      type: object
+      required: [id, amountMinor, currency, status]
+      properties:
+        id:
+          type: string
+        amountMinor:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [succeeded, pending]
+        source:
+          type: string
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+  responses:
+    InvalidRequest:
+      description: Schema or header validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: invalid_request
+              message: amountMinor is required
+    NotFound:
+      description: Unknown charge
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: not_found
+              message: charge not found

@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: Content blog (public)
+  version: "1.0.0"
+  description: |
+    Hand-placed public read model for P08-style posts (slug, title, publishedAt).
+    Not a live proxy to pf-content-blog. No authoring or secrets.
+  x-portal:
+    slug: content-blog
+    summary: P08-style published posts
+    source: P08 (hand-placed OpenAPI)
+servers:
+  - url: http://localhost:8111/mock/content-blog
+    description: Local mock
+tags:
+  - name: Posts
+paths:
+  /posts:
+    get:
+      tags: [Posts]
+      operationId: listPosts
+      summary: List published posts
+      responses:
+        "200":
+          description: Posts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [posts]
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Post"
+              example:
+                posts:
+                  - slug: hello-portal
+                    title: Hello from the developer portal
+                    publishedAt: "2026-08-19T00:00:00Z"
+  /posts/{slug}:
+    get:
+      tags: [Posts]
+      operationId: getPost
+      summary: Get a published post
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+          example: hello-portal
+      responses:
+        "200":
+          description: Post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+              example:
+                slug: hello-portal
+                title: Hello from the developer portal
+                publishedAt: "2026-08-19T00:00:00Z"
+                body: Spec-first demo post. No production secrets.
+        "404":
+          description: Unknown slug
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error:
+                  code: not_found
+                  message: post not found
+components:
+  schemas:
+    Post:
+      type: object
+      required: [slug, title, publishedAt]
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        body:
+          type: string
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string

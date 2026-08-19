@@ -1,0 +1,173 @@
+openapi: 3.0.3
+info:
+  title: Commerce catalog
+  version: "1.0.0"
+  description: |
+    Hand-placed subset of P06 catalog HTTP (`GET/POST /v1/products`).
+    Prices are integer minor units. This spec is a portal fixture, not a live proxy to pf-commerce.
+  x-portal:
+    slug: commerce-catalog
+    summary: P06-style product catalog
+    source: P06 (hand-placed OpenAPI)
+servers:
+  - url: http://localhost:8111/mock/commerce-catalog
+    description: Local mock
+tags:
+  - name: Products
+paths:
+  /v1/products:
+    get:
+      tags: [Products]
+      operationId: listProducts
+      summary: List products
+      responses:
+        "200":
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [products]
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+              example:
+                products:
+                  - id: prod_demo_1
+                    sku: MUG-01
+                    name: Portfolio mug
+                    description: Ceramic mug
+                    priceMinor: 1800
+                    currency: JPY
+                    imageUrl: https://example.invalid/mug.png
+                    active: true
+    post:
+      tags: [Products]
+      operationId: createProduct
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProduct"
+            example:
+              sku: MUG-02
+              name: Travel mug
+              description: Insulated
+              priceMinor: 2400
+              currency: JPY
+              imageUrl: https://example.invalid/travel-mug.png
+              active: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+              example:
+                id: prod_demo_2
+                sku: MUG-02
+                name: Travel mug
+                description: Insulated
+                priceMinor: 2400
+                currency: JPY
+                imageUrl: https://example.invalid/travel-mug.png
+                active: true
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+  /v1/products/{id}:
+    get:
+      tags: [Products]
+      operationId: getProduct
+      summary: Get a product by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          example: prod_demo_1
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+              example:
+                id: prod_demo_1
+                sku: MUG-01
+                name: Portfolio mug
+                description: Ceramic mug
+                priceMinor: 1800
+                currency: JPY
+                imageUrl: https://example.invalid/mug.png
+                active: true
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  schemas:
+    CreateProduct:
+      type: object
+      required: [sku, name, priceMinor, currency]
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        priceMinor:
+          type: integer
+          minimum: 0
+        currency:
+          type: string
+        imageUrl:
+          type: string
+        active:
+          type: boolean
+    Product:
+      allOf:
+        - $ref: "#/components/schemas/CreateProduct"
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+  responses:
+    InvalidRequest:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: invalid_request
+              message: sku is required
+    NotFound:
+      description: Unknown product
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: not_found
+              message: product not found

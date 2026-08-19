@@ -1,0 +1,10 @@
+services:
+  portal:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    environment:
+      PORTAL_HTTP_ADDR: ${PORTAL_HTTP_ADDR:-:8111}
+      PORTAL_SPECS_DIR: /specs
+    ports:
+      - "${PORTAL_HOST_PORT:-8111}:8111"

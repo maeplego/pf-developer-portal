@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portal
+  template:
+    metadata:
+      labels:
+        app: portal
+    spec:
+      containers:
+        - name: portal
+          image: pf-developer-portal:dev
+          ports:
+            - containerPort: 8111
+          env:
+            - name: PORTAL_HTTP_ADDR
+              value: ":8111"
+            - name: PORTAL_SPECS_DIR
+              value: /specs
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: ""
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8111
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8111
