@@ -17,7 +17,12 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Printf("portal listening on %s (%d specs)", addr, len(cat.APIs))
-	if err := http.ListenAndServe(addr, httpapi.New(cat)); err != nil {
+	cfg := httpapi.Config{
+		CIDashURL:  getenv("PORTAL_CI_DASH_URL", ""),
+		ReviewURL:  getenv("PORTAL_REVIEW_URL", ""),
+		ScannerURL: getenv("PORTAL_SCANNER_URL", ""),
+	}
+	if err := http.ListenAndServe(addr, httpapi.New(cat, cfg)); err != nil {
 		log.Fatal(err)
 	}
 }

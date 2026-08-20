@@ -13,12 +13,45 @@ import (
 )
 
 type Server struct {
-	cat  *catalog.Catalog
-	page *template.Template
+	cat   *catalog.Catalog
+	page  *template.Template
+	tools []ToolLink
 }
 
-func New(cat *catalog.Catalog) http.Handler {
-	s := &Server{cat: cat, page: mustParse()}
+type ToolLink struct {
+	Title string
+	URL   string
+	Note  string
+}
+
+type Config struct {
+	CIDashURL  string
+	ReviewURL  string
+	ScannerURL string
+}
+
+func defaultTools(cfg Config) []ToolLink {
+	ci := cfg.CIDashURL
+	if ci == "" {
+		ci = "http://localhost:3011"
+	}
+	review := cfg.ReviewURL
+	if review == "" {
+		review = "http://localhost:3013"
+	}
+	scanner := cfg.ScannerURL
+	if scanner == "" {
+		scanner = "http://localhost:3010"
+	}
+	return []ToolLink{
+		{Title: "P11 CI dashboard", URL: ci, Note: "GitHub Actions runs (pf-developer-ci-dash)"},
+		{Title: "P11 PR review BFF", URL: review, Note: "GitHub PR API proxy (pf-developer-review)"},
+		{Title: "P11 repo scanner", URL: scanner, Note: "Static checks (pf-developer-scanner CLI / compose)"},
+	}
+}
+
+func New(cat *catalog.Catalog, cfg Config) http.Handler {
+	s := &Server{cat: cat, page: mustParse(), tools: defaultTools(cfg)}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", s.health)
 	mux.HandleFunc("GET /ready", s.health)
@@ -100,6 +133,7 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 		Title: "API catalog",
 		Home:  true,
 		APIs:  s.cat.APIs,
+		Tools: s.tools,
 	})
 }
 
@@ -158,6 +192,7 @@ type pageData struct {
 	API   *catalog.API
 	Ops   []opView
 	Mock  string
+	Tools []ToolLink
 }
 
 type opView struct {

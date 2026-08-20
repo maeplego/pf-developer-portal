@@ -19,7 +19,7 @@ func testServer(t *testing.T) http.Handler {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return New(c)
+	return New(c, Config{})
 }
 
 func TestHealthAndCatalog(t *testing.T) {

@@ -124,18 +124,12 @@ const pageHTML = `<!DOCTYPE html>
           <p>Specs live in <code>specs/</code>. Reference on the left, mock under <code>/mock/{slug}</code>. Breaking-change CI, GitHub Actions dashboard, and PR review are sibling repos in this portfolio.</p>
         </div>
         <div class="cards">
-          <a class="card" href="http://localhost:3011" target="_blank" rel="noreferrer">
-            <strong>P11 CI dashboard</strong>
-            <div class="note">GitHub Actions runs (local <code>pf-developer-ci-dash</code>)</div>
+          {{range .Tools}}
+          <a class="card" href="{{.URL}}" target="_blank" rel="noreferrer">
+            <strong>{{.Title}}</strong>
+            <div class="note">{{.Note}}</div>
           </a>
-          <a class="card" href="http://localhost:3013" target="_blank" rel="noreferrer">
-            <strong>P11 PR review BFF</strong>
-            <div class="note">GitHub PR API proxy (<code>pf-developer-review</code>)</div>
-          </a>
-          <a class="card" href="http://localhost:3010" target="_blank" rel="noreferrer">
-            <strong>P11 repo scanner</strong>
-            <div class="note">Static checks (<code>pf-developer-scanner</code>)</div>
-          </a>
+          {{end}}
         </div>
         <div class="cards" style="margin-top:1rem">
           {{range .APIs}}
