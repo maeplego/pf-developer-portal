@@ -24,6 +24,18 @@ YAML に載っている仕様:
 
 Compose は `deploy/` です。ポータルは http://localhost:8111 です。
 
+### `PORTAL_*_URL`（Compose vs Kubernetes）
+
+ホームの「他ツール」リンクは次の環境変数です。
+
+| 変数 | Compose 例 | Kubernetes |
+| --- | --- | --- |
+| `PORTAL_CI_DASH_URL` | `http://localhost:8115` | 空のまま（ci-dash はクラスタ非搭載） |
+| `PORTAL_REVIEW_URL` | `http://localhost:8118` | 空のまま |
+| `PORTAL_SCANNER_URL` | 任意（ホストの docs URL など） | 空のまま |
+
+K8s に載るのは **portal のみ**（overlay B/D/E）。ci-dash / review / scanner / CLI はホストまたは Compose 専用です。
+
 ## OpenAPI の破壊的変更
 
 ```powershell

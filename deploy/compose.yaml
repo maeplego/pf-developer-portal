@@ -6,5 +6,8 @@ services:
     environment:
       PORTAL_HTTP_ADDR: ${PORTAL_HTTP_ADDR:-:8111}
       PORTAL_SPECS_DIR: /specs
+      PORTAL_CI_DASH_URL: ${PORTAL_CI_DASH_URL:-http://localhost:8115}
+      PORTAL_REVIEW_URL: ${PORTAL_REVIEW_URL:-http://localhost:8118}
+      PORTAL_SCANNER_URL: ${PORTAL_SCANNER_URL:-}
     ports:
       - "${PORTAL_HOST_PORT:-8111}:8111"
