@@ -1,4 +1,4 @@
-# pf-developer-portal
+﻿# pf-developer-portal
 
 学習用の OpenAPI ポータルです。手置きの YAML をカタログとリファレンスに描き、example からモック応答します。他プロダクトへのライブプロキシや Git clone はありません。**本番 API ポータルの置き換えではありません。**
 
@@ -34,3 +34,13 @@ go run ./cmd/oasdiff-gate testdata\openapi\base.yaml testdata\openapi\breaking.y
 後者は終了コード 1 です。`.github/workflows/openapi-breaking.yml` が同じフィクスチャを CI で回します。他リポジトリへは `examples/oasdiff-action.yml` をコピーできます。
 
 設計の詳細は [portfolio-plan](https://github.com/maeplego/portfolio-plan) の `portfolio-plan/developer-platform/docs/` です。
+
+## ライセンスと利用条件
+
+本リポジトリは **デモ・学習・社内評価用** です。現状品質に **保証はありません**。
+
+- 許可: クローン、ローカル実行、学習、非本番の評価
+- 別契約が必要: 本番運用、有償サービスへの組込み、再販・托管の提供
+
+詳細は [LICENSE](./LICENSE) と [licensing.md](https://github.com/maeplego/portfolio-plan/blob/master/portfolio-plan/licensing.md) を参照してください。
+
